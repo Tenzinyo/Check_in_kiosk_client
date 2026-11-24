@@ -14,14 +14,18 @@ PROMO_DAYS = {6, 0, 1}  # Sunday (6), Monday (0), Tuesday (1)
 
 app = FastAPI(title = "Kiosk Check-IN & Rewards API ")
 
-# Allow your React frontend (e.g., Vite on localhost:5173) to call this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "null",  # file:// protocol (opening HTML directly in browser)
+    ],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 DB_PATH = Path(__file__).parent / "db" / "kiosk.db"
 VISIT_MILESTONE = 6  # Every 5th visit = 15% off
 
@@ -29,6 +33,9 @@ class CheckInRequest(BaseModel):
     name: str
     phone_number: str
     referred_phone : Optional[str] = None
+
+class RedeemRequest(BaseModel):
+    phone_number: str 
     
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -176,12 +183,56 @@ def evaluate_off_peak_promo(now: Optional[datetime] = None) -> dict:
         "promo_reason": promo_reason,
         "promo_message": "Off-Peak Special: Show this screen at checkout for 20% off today!" if promo_eligible else None
     }
-         
+    
+@app.post('/api/redeem')  
+def redeem_discount(payload: RedeemRequest):
+    phone_number = payload.phone_number
+    phone_number = normalize_phone(payload.phone_number)
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        existing_user = cursor.execute(
+            "SELECT * FROM customers WHERE phone_number = ?",(phone_number,)
+        ).fetchone()
+        
+        if existing_user is not None:
+            if existing_user["available_discounts"]<=0:
+                raise HTTPException(status_code = 400, detail="No available discounts to redeem.")
+            customer_id = existing_user["id"]
+            reward_row = cursor.execute(
+                "SELECT id FROM rewards WHERE customer_id = ? AND status = 'AVAILABLE' ORDER BY id ASC LIMIT 1", (customer_id,),
+            ).fetchone()
+            if reward_row is None:
+                raise HTTPException(status_code=400, detail="No available rewards to redeem.")
+            reward_id = reward_row["id"]
+            cursor.execute(
+                            "UPDATE rewards SET status = ?, redeemed_at = CURRENT_TIMESTAMP  WHERE id = ?",("REDEEMED",reward_id),
+                        )
+        if existing_user is None:
+            raise HTTPException(status_code=400, detail="Customer does not exist.")
+        
+        cursor.execute(
+            "UPDATE customers SET available_discounts = available_discounts - 1 WHERE id = ?", (customer_id,),
+        )
+        conn.commit()
+        return{
+            "name": existing_user["name"],
+            "message": "Discount redeemed successfully.",
+            "available_discounts": existing_user["available_discounts"] - 1
+        }
+        
+        
+    
+    
+        
+            
+        
             
             
             
-                    
-                    
+        
+    
+            
+            
                 
                 
                 
