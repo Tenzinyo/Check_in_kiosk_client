@@ -1,5 +1,5 @@
 // Locally use http://127.0.0.1:8000; later swap to your Render https:// URL!
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://check-in-kiosk-client.onrender.com";
 
 const form = document.getElementById("checkin-form");
 const errorBox = document.getElementById("error-box");
