@@ -1,0 +1,6 @@
+.venv/
+node_modules/
+db/kiosk.db
+__pycache__/
+*.pyc
+.env
