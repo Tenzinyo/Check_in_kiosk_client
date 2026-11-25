@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-VISIT_MILESTONE = 6  # Every 6th visit = reward
+VISIT_MILESTONE = 10  # Every 6th visit = reward
 
 
 class CheckInRequest(BaseModel):
