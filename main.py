@@ -93,6 +93,13 @@ def check_in(payload: CheckInRequest):
         else:
             is_new_user = False
             customer_id = existing_user["id"]
+            today_local = datetime.now(STORE_TZ).date()
+            cursor.execute(
+                "SELECT 1 FROM visits WHERE customer_id = %s AND (checked_in_at AT TIMEZONE 'America/New_York'):: date= %s LIMIT 1",(customer_id,today_local),
+            )
+            if cursor.fetchone() is not None:
+                raise HTTPException(status_code = 400,
+                                    detail = "You've already checked in today! Come back on your next visit to earn more points. See you soon")
             visits_count = existing_user["visits_count"] + 1
             available_discounts = existing_user["available_discounts"]
             cursor.execute(
