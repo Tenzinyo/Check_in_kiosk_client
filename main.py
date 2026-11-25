@@ -59,7 +59,7 @@ def check_in(payload: CheckInRequest):
     try:
         cursor.execute("SELECT * FROM customers WHERE phone_number = %s", (phone,))
         existing_user = cursor.fetchone()
-
+        referred_user = None
         if existing_user is None:
             is_new_user = True
             referrer_id = None
@@ -135,7 +135,12 @@ def check_in(payload: CheckInRequest):
         "visits_count": visits_count,
         "visits_away": visits_away,
         "available_discounts": available_discounts,
-        "promo": promo
+        "promo": promo,
+        "referral_message": (
+            f"Sweet! {referred_user['name']} just earned 20% off for referring you. "
+            f"Refer a friend on your next visit to earn 20% off too!"
+            if referred_user else None
+            )
     }
 
 
@@ -144,18 +149,18 @@ def evaluate_off_peak_promo(now: Optional[datetime] = None) -> dict:
         now = datetime.now(STORE_TZ)
     promo_eligible = False
     promo_reason = ""
-    promo_days = [6, 0, 1]  # Sunday (6), Monday (0), Tuesday (1)
+    promo_days = [0, 1]  # Sunday (6), Monday (0), Tuesday (1)
     if now.weekday() in promo_days:
         promo_eligible = True
         promo_reason = "Special day discount"
-    elif 13 <= now.hour < 15:
-        promo_eligible = True
-        promo_reason = "Special hour discount"
+    # elif 13 <= now.hour < 15:
+    #     promo_eligible = True
+    #     promo_reason = "Special hour discount"
 
     return {
         "promo_eligible": promo_eligible,
         "promo_reason": promo_reason,
-        "promo_message": "Off-Peak Special: Show this screen at checkout for 20% off today!" if promo_eligible else None
+        "promo_message": "Off-Peak Special: Show this screen at checkout for 10% off today!" if promo_eligible else None
     }
 
 

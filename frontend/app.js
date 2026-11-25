@@ -60,6 +60,7 @@ form.addEventListener("submit", async (e) => {
     const modalThanks = document.getElementById("modal-thanks");
     const modalVisits = document.getElementById("modal-visits");
     const promoBox = document.getElementById("promo-box");
+    const referralBox = document.getElementById("referral-box");
     const rewardBox = document.getElementById("reward-box");
     const rewardText = document.getElementById("reward-text");
 
@@ -83,8 +84,15 @@ form.addEventListener("submit", async (e) => {
       promoBox.style.display = "none";
     }
 
+    if (data.referral_message) {
+      referralBox.textContent = `🎀 ${data.referral_message}`;
+      referralBox.style.display = "block";
+    } else {
+      referralBox.style.display = "none";
+    }
+
     if (data.available_discounts > 0) {
-      rewardText.textContent = `🎀 You have ${data.available_discounts} reward discount(s) ready to use!`;
+      rewardText.textContent = `🎁 You have ${data.available_discounts} reward discount(s) ready to use!`;
       rewardBox.style.display = "block";
     } else {
       rewardBox.style.display = "none";
