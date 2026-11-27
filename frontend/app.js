@@ -69,13 +69,16 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearError();
   submitBtn.disabled = true;
-  submitBtn.textContent = "Checking You In... ✨";
 
   const name = document.getElementById("name").value;
   const phoneNumber = document.getElementById("phone").value;
   const referredPhone = document.getElementById("referred-phone").value.trim();
 
   try {
+    submitBtn.textContent = "Verifying Location... 📍";
+    const coords = await getCustomerLocation();
+
+    submitBtn.textContent = "Checking You In... ✨";
     const response = await fetch(`${API_BASE}/api/checkin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,6 +86,8 @@ form.addEventListener("submit", async (e) => {
         name,
         phone_number: phoneNumber,
         referred_phone: referredPhone || null,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
       }),
     });
 
