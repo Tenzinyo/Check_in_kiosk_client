@@ -123,7 +123,7 @@ def check_in(payload: CheckInRequest):
             customer_id = existing_user["id"]
             today_local = datetime.now(STORE_TZ).date()
             cursor.execute(
-                "SELECT 1 FROM visits WHERE customer_id = %s AND (created_at AT TIMEZONE 'America/New_York'):: date= %s LIMIT 1",(customer_id,today_local),
+                "SELECT 1 FROM visits WHERE customer_id = %s AND (created_at AT TIME ZONE 'America/New_York'):: date= %s LIMIT 1",(customer_id,today_local),
             )
             if cursor.fetchone() is not None:
                 raise HTTPException(status_code = 400,
