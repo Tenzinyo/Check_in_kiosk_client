@@ -27,6 +27,44 @@ function clearError() {
   errorBox.style.display = "none";
 }
 
+function getCustomerLocation() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Your browser does not support location check-ins."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          reject(
+            new Error(
+              "Please allow Location Access in your browser settings so we can verify you're at the salon!"
+            )
+          );
+        } else {
+          reject(
+            new Error(
+              "Could not verify your location. Please step closer to the front window or try again."
+            )
+          );
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      }
+    );
+  });
+}
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   clearError();

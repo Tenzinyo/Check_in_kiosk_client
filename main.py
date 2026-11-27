@@ -10,6 +10,11 @@ from pydantic import BaseModel
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import math
+from typing import Optional
+from pydantic import BaseModel
+from fastapi import HTTPException
+
 STORE_TZ = ZoneInfo("America/New_York")
 PROMO_DAYS = {6, 0, 1}  # Sunday (6), Monday (0), Tuesday (1)
 
