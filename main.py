@@ -18,6 +18,11 @@ from fastapi import HTTPException
 STORE_TZ = ZoneInfo("America/New_York")
 PROMO_DAYS = {6, 0, 1}  # Sunday (6), Monday (0), Tuesday (1)
 
+# Angels Brows Shaping — 1356 U St NW, Washington, DC 20009
+STORE_LAT = 38.9169
+STORE_LON = -77.0312
+MAX_DISTANCE_METERS = 150.0  # ~500 ft buffer for indoor GPS accuracy
+
 app = FastAPI(title="Kiosk Check-IN & Rewards API")
 
 app.add_middleware(
@@ -35,6 +40,8 @@ class CheckInRequest(BaseModel):
     name: str
     phone_number: str
     referred_phone: Optional[str] = None
+    longitude : Optional[float] = None
+    latitude : Optional[float] = None
 
 
 class RedeemRequest(BaseModel):
@@ -54,9 +61,25 @@ def normalize_phone(raw_phone: str) -> str:
         raise HTTPException(status_code=400, detail="Phone number must be 10 digits long.")
     return numbers
 
+def haversine_meters(lat1:float,long1:float,lat2:float,long2:float) -> float:
+    """Return great-circle distance in meters between two GPS coordinates."""
+    r = 6_371_000.0  # Earth radius in meters
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(long2 - long1)
+    a = (
+        math.sin(d_phi/2)**2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda/2) ** 2
+    )
+    return 2 * r * math.atan2(math.sqrt(a),math.sqrt(1-a))
 
 @app.post('/api/checkin')
 def check_in(payload: CheckInRequest):
+    if payload.latitude is None or payload.longitude is None:
+        raise HTTPException(status_code= 400, detail = "Location access is required to check in at Angels Brows Shaping.")
+    distance_m = haversine_meters(payload.latitude,payload.longitude, STORE_LAT, STORE_LON)
+    if distance_m > MAX_DISTANCE_METERS:
+        raise HTTPException(status_code= 400, detail = "You must be at Angels Brows Shaping (1356 U St NW) to check in!")
     phone = normalize_phone(payload.phone_number)
     clean_name = payload.name.strip()
     conn = get_db_connection()
